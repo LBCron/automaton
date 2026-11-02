@@ -1,10 +1,10 @@
 ---
-name: automaton-implement
+name: automaton-implement-issue
 description: Use when implementing a feature or fixing a bug in Automaton from start to finish - issue, branch, tests, PR, review, merge, release, test-server upgrade and end-to-end verification as real users, with as few owner interruptions as possible.
 license: Apache-2.0
 ---
 
-# Automaton implement
+# Automaton implement issue
 
 One agent takes a feature or bug from request to verified on the test server. Read the area skills that
 `AGENTS.md` lists for the code you touch; this skill is only the delivery loop around them. Open the detail file for
