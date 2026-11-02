@@ -461,9 +461,9 @@ public class ResourceAuthorizationService
             return true;
         }
 
-        // Check project membership
+        // Check project membership; a deleted project shares nothing (its links are kept for reactivation).
         var hasProjectAccess = await dbContext.ProjectRunners
-            .Where(pr => pr.RunnerId == runnerId)
+            .Where(pr => pr.RunnerId == runnerId && pr.Project != null && pr.Project.IsActive)
             .Join(
                 dbContext.ProjectMembers,
                 pr => pr.ProjectId,
@@ -509,9 +509,9 @@ public class ResourceAuthorizationService
             return false;
         }
 
-        // Check if runner is part of any project
+        // Check if runner is part of any active project; links of deleted projects do not count.
         var isPartOfProject = await dbContext.ProjectRunners
-            .AnyAsync(pr => pr.RunnerId == runnerId, cancellationToken);
+            .AnyAsync(pr => pr.RunnerId == runnerId && pr.Project != null && pr.Project.IsActive, cancellationToken);
 
         return !isPartOfProject;
     }
@@ -611,7 +611,7 @@ public class ResourceAuthorizationService
 
         // Runners where user is project member
         var projectRunnerIds = dbContext.ProjectRunners
-            .Where(pr => pr.Project != null && pr.Project.Members.Any(pm => pm.UserId == userId && pm.IsActive))
+            .Where(pr => pr.Project != null && pr.Project.IsActive && pr.Project.Members.Any(pm => pm.UserId == userId && pm.IsActive))
             .Select(pr => pr.RunnerId);
 
         var projectRunners = dbContext.Runners
@@ -731,7 +731,7 @@ public class ResourceAuthorizationService
             var projectRunnerIds = dbContext.ProjectRunners
                 .Where(pcs =>
                     pcs.ProjectId == projectId.Value &&
-                    pcs.Project != null && pcs.Project.Members.Any(pm => pm.UserId == userId && pm.IsActive))
+                    pcs.Project != null && pcs.Project.IsActive && pcs.Project.Members.Any(pm => pm.UserId == userId && pm.IsActive))
                 .Select(pcs => pcs.RunnerId);
 
             var projectRunners = dbContext.Runners
