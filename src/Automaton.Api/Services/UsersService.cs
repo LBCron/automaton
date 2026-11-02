@@ -95,13 +95,32 @@ public class UsersService
     public async Task UpdatePassword(Guid userId, string oldPassword, string newPassword)
     {
         var user = await GetUserById(userId);
+        if (user.MustChangePassword && string.Equals(oldPassword, newPassword, StringComparison.Ordinal))
+            throw new PasswordChangeRejectedException("Choose a password different from the one you were given.");
 
+        // Cleared in the same save as the new password, so a failure leaves both unchanged.
+        var required = user.MustChangePassword;
+        user.MustChangePassword = false;
         var result = await _userManager.ChangePasswordAsync(user, oldPassword, newPassword);
 
         if (!result.Succeeded)
         {
-            throw new InvalidOperationException("Error in updating password!");
+            user.MustChangePassword = required;
+            throw new PasswordChangeRejectedException(string.Join(" ", result.Errors.Select(error => error.Description)));
         }
+
+        if (!required) return;
+        await _auditEventService.WriteAsync(new AuditEventWriteRequest
+        {
+            Action = AuditActions.Changed,
+            EntityType = AuditEntityTypes.User,
+            EntityId = userId,
+            EventType = AuditEventTypes.UserFirstSignInCompleted,
+            Message = "User chose a new password at first sign-in.",
+            Outcome = AuditOutcomes.Success,
+            ActorUserId = userId,
+            TargetUserId = userId
+        }, CancellationToken.None);
     }
 
     public async Task RevokeAllRefreshTokensAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -830,3 +849,6 @@ public class UsersService
         }
     }
 }
+
+/// <summary>The new password was not accepted (wrong current password, policy, or unchanged); the message is safe to show.</summary>
+public sealed class PasswordChangeRejectedException(string message) : Exception(message);
