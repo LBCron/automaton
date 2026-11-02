@@ -272,6 +272,37 @@ public sealed class RunnerRuntimeContainerManager : IAppRuntimeProcessManager
         return await StartAndPromoteCandidateAsync(attempt, previous, cancellationToken);
     }
 
+    /// <summary>
+    /// Replaces the running container with a new one from a copy of the deployed files, using the normal
+    /// start, readiness and promotion path; the old container keeps serving until the new one is ready.
+    /// The copy gets a fresh candidate identity because brokered hosts name (and reuse) containers by it.
+    /// Compose runtimes receive no app secrets, so they are left alone.
+    /// </summary>
+    public async Task<bool> RestartAsync(Guid appId, Guid deploymentTargetId, CancellationToken cancellationToken)
+    {
+        var metadata = await ReadExistingMetadataAsync(metadataStore.GetPath(appId, deploymentTargetId), cancellationToken);
+        if (metadata is not { State: RuntimeReadinessState.Ready }
+            || metadata.Candidate is not (null or { State: RuntimeReadinessState.Failed }) || string.IsNullOrWhiteSpace(metadata.ContainerId)
+            || metadata.ComposeCandidateId is not null || !workspace.RuntimeArtifactExists(metadata.ArtifactRoot))
+            return false;
+        var candidateId = Guid.NewGuid();
+        var artifact = workspace.GetAppRuntimeCandidateApplicationDirectory(appId, deploymentTargetId, candidateId);
+        try
+        {
+            RunnerWorkspaceService.CopyRuntimeArtifact(metadata.ArtifactRoot!, artifact);
+            await ApplyAsync(appId, deploymentTargetId, RunnerRuntimeMetadataPolicy.CreateApplicationContract(metadata),
+                cancellationToken, artifact, candidateId);
+        }
+        catch
+        {
+            var warnings = new List<string>();
+            RunnerWorkspaceService.TryDeletePreviousRuntimeArtifact(
+                workspace.GetAppRuntimeCandidateDirectory(appId, deploymentTargetId, candidateId), warnings);
+            throw;
+        }
+        return true;
+    }
+
     private async Task<RunnerRuntimeDeploymentMetadata?> ReadExistingMetadataAsync(
         string metadataPath,
         CancellationToken cancellationToken)
