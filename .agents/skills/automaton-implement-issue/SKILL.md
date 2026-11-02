@@ -28,7 +28,8 @@ a step when you reach it.
 Before starting, create a to-do item for each of steps 1–8, naming its detail file where it has one. Tick them off
 as you go; the task is not done until step 8 is.
 
-1. **Issue.** Find the issue. If there is none, create it first (`issue.md`). Read its parent and blockers, restate
+1. **Issue.** Find the issue. If there is none, create it first (`issue.md`). If no task was given at all, take the
+   open Todo item with the highest priority on the board and say which one you took. Read its parent and blockers, restate
    the done criteria, and set the board Status to In Progress.
 2. **Build.** Branch from `main`. For a bug, reproduce it first on the surface where it shows (API, CLI or Studio),
    then commit a failing test before the fix; afterwards the original reproduction must pass.
