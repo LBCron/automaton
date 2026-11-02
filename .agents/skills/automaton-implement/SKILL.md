@@ -25,6 +25,9 @@ a step when you reach it.
 
 ## Steps
 
+Before starting, create a to-do item for each of steps 1–8, naming its detail file where it has one. Tick them off
+as you go; the task is not done until step 8 is.
+
 1. **Issue.** Find the issue. If there is none, create it first (`issue.md`). Read its parent and blockers, restate
    the done criteria, and set the board Status to In Progress.
 2. **Build.** Branch from `main`. For a bug, reproduce it first on the surface where it shows (API, CLI or Studio),
@@ -52,5 +55,6 @@ a step when you reach it.
 
 ## Handoff
 
-A short list: what changed, tests, the release and test-server version, end-to-end checks with pass or fail, whether
-the `e2e-` items were removed, and anything waiting for the owner.
+A short list: what changed, tests, the release and test-server version, whether the `e2e-` items were removed, and
+anything waiting for the owner. For each end-to-end check, give what was run and what came back (status code,
+command output or screenshot path). Mark anything you did not check as "not checked", with the reason.

@@ -1,5 +1,6 @@
 ---
 name: automaton-implement
+disable-model-invocation: true
 description: Implement an Automaton feature or bug fix end to end - issue, PR, review, merge, release, test-server upgrade and end-to-end verification.
 ---
 
