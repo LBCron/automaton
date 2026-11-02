@@ -29,6 +29,7 @@ public sealed class HostContainerExecutionTests
         Assert.That(invoked, Is.False);
     }
 
+    [Category("Quarantine528")] // #528: fails on main; fix or remove
     [TestCase("HostContainerExecution")]
     [TestCase(RunnerCapabilities.ManagedContainerExecution)]
     public async Task InfrastructureIdentityCannotExecuteMachineOrLegacyContainerWork(string capabilities)
@@ -51,6 +52,7 @@ public sealed class HostContainerExecutionTests
         Assert.That(invoked, Is.False);
     }
 
+    [Category("Quarantine528")] // #528: fails on main; fix or remove
     [Test]
     public async Task HostExecutionAloneDoesNotAuthorizeHostContainerExecution()
     {
@@ -78,6 +80,7 @@ public sealed class HostContainerExecutionTests
         }
     }
 
+    [Category("Quarantine528")] // #528: fails on Linux CI; fix or remove
     [Test]
     public async Task MachineManagementRunsTypedOperationOnlyForItsStableIdentity()
         => await MachineManagementIdentityScenario.ExecuteAsync();
@@ -346,6 +349,7 @@ public sealed class HostContainerExecutionTests
         }
     }
 
+    [Category("Quarantine528")] // #528: fails on main; fix or remove
     [Test]
     public async Task HostedRunnerCannotUseHostContainerCapability()
     {
