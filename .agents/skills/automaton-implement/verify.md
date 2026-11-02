@@ -1,5 +1,11 @@
 # Deliver and verify
 
+## Where to test
+
+All end-to-end checks run on the test server: the machine Automaton-Runner-01, Studio at
+`studio.test.automaton.monster`. The exact URLs are in `accounts.env` below. An agent running on that machine is
+already on the test server. Never test on production, and never use a local stack in place of the end-to-end check.
+
 ## Release
 
 After the merge, wait for the `Runner image` and `Build production images` workflows on `main` to succeed; a release
