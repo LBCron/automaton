@@ -13,6 +13,8 @@ public sealed class AppActionExecutionService
     private readonly AppActionExecutionCoordinator coordinator;
     private readonly MachineActionExecutionHandler? machineActionExecution;
     private readonly ConcurrentDictionary<Guid, ActiveExecution> active = new();
+    // Executions recorded before this process started were interrupted by the restart; later ones belong to this run.
+    private readonly DateTime startedAtUtc = DateTime.UtcNow;
     internal const ushort MaximumConcurrentExecutions = 4;
     private readonly SemaphoreSlim concurrencyGate = new(MaximumConcurrentExecutions, MaximumConcurrentExecutions);
     private bool IsMachineManagement => RunnerApplicationProfiles.Normalize(
@@ -83,7 +85,8 @@ public sealed class AppActionExecutionService
         AppActionExecutionResult result)
     {
         if (!machineManagement || result.Status != AppModuleExecutionStatuses.Lost) return;
-        await machineActionExecution!.RemoveAsync(request);
+        // Keep the execution pending when its container could not be removed, so the startup cleanup can retry.
+        if (!await machineActionExecution!.RemoveAsync(request)) return;
         WriteExecutionState(statePath, CreateTerminalState(request, result));
     }
 
@@ -185,39 +188,58 @@ public sealed class AppActionExecutionService
         return removed;
     }
 
-    public async Task CleanupInterruptedActionContainersAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Removes the containers of Actions that were running when the Runner stopped and marks them lost.
+    /// Returns false when some could not be removed yet (for example before the Runner knows its identity),
+    /// leaving them pending so a later call can finish the job.
+    /// </summary>
+    public async Task<bool> CleanupInterruptedActionContainersAsync(CancellationToken cancellationToken)
     {
         if (RunnerApplicationProfiles.Normalize(Environment.GetEnvironmentVariable("AUTOMATON_RUNNER_APPLICATION_PROFILE"))
             != RunnerApplicationProfiles.MachineManagement || machineActionExecution is null || !Directory.Exists(workspace.AppsRoot))
-            return;
+            return true;
 
+        var complete = true;
         foreach (var executionsDirectory in Directory.GetDirectories(workspace.AppsRoot, "executions", SearchOption.AllDirectories))
         foreach (var executionDirectory in Directory.GetDirectories(executionsDirectory))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var statePath = Path.Combine(executionDirectory, ".automaton-execution.json");
-            var state = ReadExecutionState(statePath);
-            if (state is null || state.Terminal || state.Result.ExecutionId == Guid.Empty
-                || state.AppId == Guid.Empty || state.DeploymentTargetId == Guid.Empty
-                || string.IsNullOrWhiteSpace(state.ActionKey))
-                continue;
-            await machineActionExecution.RemoveAsync(new ExecuteAppActionModuleRequest
+            // Executions recorded by this process are running now, not interrupted.
+            if (File.GetLastWriteTimeUtc(statePath) >= startedAtUtc) continue;
+            try
             {
-                ExecutionId = state.Result.ExecutionId,
-                AppId = state.AppId,
-                DeploymentTargetId = state.DeploymentTargetId,
-                ActionKey = state.ActionKey
-            });
-            var lost = AppActionExecutionResultFactory.Create(state.Result.ExecutionId,
-                AppModuleExecutionStatuses.Lost, null, AppModuleExecutionErrorCodes.AmbiguousDispatch,
-                "Runner restarted before completion was confirmed; the Action was not replayed.",
-                state.Result.DeploymentHash, state.Result.StartedAtUtc, logs: false, result: false);
-            WriteExecutionState(statePath, CreateTerminalState(new ExecuteAppActionModuleRequest
+                var state = ReadExecutionState(statePath);
+                if (state is null || state.Terminal || state.Result.ExecutionId == Guid.Empty
+                    || state.AppId == Guid.Empty || state.DeploymentTargetId == Guid.Empty
+                    || string.IsNullOrWhiteSpace(state.ActionKey))
+                    continue;
+                complete &= await RemoveInterruptedAsync(state, statePath);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
             {
-                ExecutionId = state.Result.ExecutionId, AppId = state.AppId,
-                DeploymentTargetId = state.DeploymentTargetId, ActionKey = state.ActionKey
-            }, lost));
+                Serilog.Log.Warning("Could not finish cleaning up an interrupted Action in {Directory}: {Error}",
+                    executionDirectory, exception.Message);
+                complete = false;
+            }
         }
+        return complete;
+    }
+
+    private async Task<bool> RemoveInterruptedAsync(RunnerActionExecutionState state, string statePath)
+    {
+        var request = new ExecuteAppActionModuleRequest
+        {
+            ExecutionId = state.Result.ExecutionId, AppId = state.AppId,
+            DeploymentTargetId = state.DeploymentTargetId, ActionKey = state.ActionKey
+        };
+        if (!await machineActionExecution!.RemoveAsync(request)) return false;
+        var lost = AppActionExecutionResultFactory.Create(state.Result.ExecutionId,
+            AppModuleExecutionStatuses.Lost, null, AppModuleExecutionErrorCodes.AmbiguousDispatch,
+            "Runner restarted before completion was confirmed; the Action was not replayed.",
+            state.Result.DeploymentHash, state.Result.StartedAtUtc, logs: false, result: false);
+        WriteExecutionState(statePath, CreateTerminalState(request, lost));
+        return true;
     }
 
     public AppModuleExecutionArtifactResponse ReadLogs(ReadAppModuleExecutionArtifactRequest request)
