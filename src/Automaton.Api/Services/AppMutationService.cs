@@ -199,9 +199,9 @@ public sealed class AppMutationService(
         // Check if user can delete this app (must be personal owner AND not part of any project)
         if (!await authorizationService.CanDeleteAppAsync(id))
         {
-            // Check if it's because the app is part of a project
-            var isPartOfProject = await dataContext.ProjectApps
-                .AnyAsync(pa => pa.WebAppId == id && pa.Project!.IsActive);
+            // Only the app's own user is told a project blocks the delete; everyone else gets the usual refusal.
+            var isPartOfProject = await dataContext.WebAppUsers.AnyAsync(link => link.WebAppId == id && link.UserId == UserId)
+                && await dataContext.ProjectApps.AnyAsync(pa => pa.WebAppId == id && pa.Project!.IsActive);
 
             if (isPartOfProject)
             {
