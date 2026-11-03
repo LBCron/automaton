@@ -42,7 +42,7 @@ Repository coding agents follow this file and the matching repository skills dir
 
 ## Git workflow
 
-Work in a branch. When several agents work on the same machine at once, give each its own Git worktree (for example `git worktree add ../automaton-<issue> -b <branch> origin/main`) so they do not switch branches under each other, and remove it after the branch is merged. Check `git status` before switching branches and preserve uncommitted changes.
+Work in a branch. When several agents work on the same machine at once, give each its own Git worktree (for example `git worktree add ../automaton-<issue> -b <branch> origin/main`) so they do not switch branches under each other, and remove it after the branch is merged. Create worktrees next to the checkout (`../automaton-<issue>`), never inside it: a worktree inside the repository shows up as untracked files for every other agent. The one exception is `.claude/worktrees/`, which Claude Code manages and Git ignores. Check `git status` before switching branches and preserve uncommitted changes.
 
 ## Operating rules
 
