@@ -24,6 +24,7 @@ Each plan is a file named after the plan (for example `self-maintenance.md`), wi
 
 | Plan | Status |
 | --- | --- |
+| [PostgreSQL](postgresql.md) | **Next** ([#584](https://github.com/rzvdaniel/automaton/issues/584)): move from MySQL before the public launch; .NET 10 follows on Npgsql |
 | [.NET 10 LTS](dotnet-10.md) | **Next** ([#492](https://github.com/rzvdaniel/automaton/issues/492)): .NET 9 support ends 10 November 2026, after which it gets no security fixes. Touches every project, so it goes alone, before other code work |
 | [Public launch](public-launch.md) | Planned ([#560](https://github.com/rzvdaniel/automaton/issues/560)): ready for visitors from articles: fresh-server install pass (after .NET 10), security policy, public pages, community setup, demo |
 | [Self-maintenance](self-maintenance.md) | **In progress** ([#490](https://github.com/rzvdaniel/automaton/issues/490)): app secrets, shared vault, app permissions and the secret audit log done; next encrypted backup download (#484) and our nightly maintenance apps (#556) |
