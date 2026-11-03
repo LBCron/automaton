@@ -55,6 +55,7 @@ These apply to every agent (Claude, Codex or others) working for the owner.
 - **Issues and the board.** Issue titles say what the work does, without plan or step numbers. Each issue belongs under a parent issue (its plan) and on the [roadmap board](https://github.com/users/rzvdaniel/projects/1) with Status, Priority and Plan set. Changing a single-select field's options through the API clears that field on every item: save all values first and set them again afterwards.
 - **One agent per issue.** Comment on an issue (or label it `agent:in-progress`) before starting, and don't pick up an issue another agent is working on. Each agent uses its own branches and worktree.
 - **Attribution.** All agents use the owner's GitHub login. End commit messages and PR descriptions with a line naming the agent, for example `Co-Authored-By: Codex <noreply@openai.com>` or the Claude equivalent.
+- **Remote sessions.** How to reach the test-server agents from the Claude and Codex apps: [docs/agents/remote-sessions.md](docs/agents/remote-sessions.md).
 - **Finish what you start, or leave it clearly open:** report what was verified, what wasn't, and post anything a later agent needs on the issue, not only in your conversation.
 
 ## Core rules
