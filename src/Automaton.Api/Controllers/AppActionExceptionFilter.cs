@@ -1,3 +1,4 @@
+using Automaton.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -11,6 +12,7 @@ public sealed class AppActionExceptionFilter : IExceptionFilter
         {
             KeyNotFoundException => StatusCodes.Status404NotFound,
             UnauthorizedAccessException => StatusCodes.Status403Forbidden,
+            RunnerNotRespondingException => StatusCodes.Status503ServiceUnavailable,
             _ => 0
         };
         if (statusCode == 0)
