@@ -6,7 +6,22 @@ Automaton is an open-source platform for deploying web apps, APIs and Actions on
 
 [Website](https://automaton.monster) · [Install guide](docs/prod/install-automaton.md) · [Releases](https://github.com/rzvdaniel/automaton/releases) · [App documentation](https://automaton.monster/docs/) · [Example apps](https://github.com/rzvdaniel/automaton-apps)
 
-> **Early access.** The core app lifecycle has been exercised on our production server. Clean-server acceptance and recovery testing remain limited. Plan backups and a brief interruption during server updates.
+> **Early access.** The app lifecycle runs on our own production server. Not yet proven: a restore onto a different clean server, isolation between several users of one server, and a timed install on a fresh server. There is no high availability, and apps cannot use WebSockets. Updates briefly interrupt the services, and backups stay on the same server unless you copy them. See [current limitations](https://automaton.monster/docs/limitations).
+
+## Is Automaton for you?
+
+**It fits** if you or your small team build many small apps, tools or automations with an AI coding agent and want them on servers you control, at a cost set by the servers you rent, and you are comfortable owning a Linux server.
+
+**It does not fit** if you need autoscaling, multi-region failover, live streaming connections, a hosted service to sign up for, or hosting for untrusted users.
+
+Compared with a cloud provider you gain control and data location, with costs set by the servers you rent; you take on updates, backups and being on call, and you get no global scale. The full comparison, with pros and cons, is on [Is Automaton for you?](https://automaton.monster/docs/is-automaton-for-you). Questions: [FAQ](https://automaton.monster/docs/faq).
+
+## Quickstart
+
+1. Install the server on an Ubuntu 24.04+ host (below) and create your administrator in Studio.
+2. Add a Runner from Studio.
+3. Install the CLI, `automaton login` against your server, then `automaton new "My App"`.
+4. Ask your coding agent to build the app, then `automaton validate` and `automaton deploy`.
 
 ## Install
 
@@ -57,7 +72,7 @@ Approve CLI login in **your Studio** when prompted. Keep credentials out of AI c
 sudo bash /opt/automaton-server/update.sh
 ```
 
-The updater verifies the latest compatible release and makes a local recovery backup before replacing API, Worker, Studio and the app store. Updating to the first release with the app store needs the new updater once; see [updates and recovery](docs/prod/install-automaton.md#update-an-installed-server). These services can be briefly unavailable. Infrastructure upgrades and existing Runner updates require separate review; this command does not upgrade every machine automatically. See [updates and recovery](docs/prod/install-automaton.md#update-an-installed-server).
+The updater verifies the latest compatible release and makes a local recovery backup before replacing API, Worker, Studio and the app store. Updating to the first release with the app store needs the new updater once; see [updates and recovery](docs/prod/install-automaton.md#update-an-installed-server). These services can be briefly unavailable. Infrastructure upgrades and existing Runner updates require separate review; this command does not upgrade every machine automatically.
 
 Your server backs itself up nightly (database and keys, 7 days, on the server). Also turn on your hosting provider's server backups; see [backups and restore](docs/prod/install-automaton.md#backups-and-restore).
 
@@ -66,7 +81,7 @@ Your server backs itself up nightly (database and keys, 7 days, on the server). 
 - **Your Studio and API** on your domain, with app, user and access management.
 - **Your app store** at `store.your-domain.com`, listing the apps their owners choose to publish.
 - **Static sites, APIs and Actions** on your own machines. Static sites share a serving container; APIs and jobs use bounded containers.
-- **Persistent app data** across redeploys, explicit machine placement and multiple Runner machines.
+- **Persistent app data** across redeploys (not included in the nightly server backups), several Runner machines, and a choice of which Runner hosts each app.
 - **Your AI workflow** with CLI-generated agent instructions and deployment checks.
 
 The software is free under [Apache 2.0](LICENSE). You pay for your servers, domain and any AI services you choose. There is no required Automaton cloud subscription. You operate the installation and updates; nightly backups are set up for you, and off-server copies are yours to keep.
