@@ -42,7 +42,7 @@ Repository coding agents follow this file and the matching repository skills dir
 
 ## Git workflow
 
-Use the existing checkout for Automaton work. Do not create or move work into another Git worktree unless the user explicitly asks. When a task needs isolation, use a branch in the existing checkout. Check `git status` before switching branches and preserve uncommitted changes.
+Work in a branch. When several agents work on the same machine at once, give each its own Git worktree (for example `git worktree add ../automaton-<issue> -b <branch> origin/main`) so they do not switch branches under each other, and remove it after the branch is merged. Check `git status` before switching branches and preserve uncommitted changes.
 
 ## Core rules
 
