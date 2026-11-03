@@ -44,6 +44,19 @@ Repository coding agents follow this file and the matching repository skills dir
 
 Work in a branch. When several agents work on the same machine at once, give each its own Git worktree (for example `git worktree add ../automaton-<issue> -b <branch> origin/main`) so they do not switch branches under each other, and remove it after the branch is merged. Check `git status` before switching branches and preserve uncommitted changes.
 
+## Operating rules
+
+These apply to every agent (Claude, Codex or others) working for the owner.
+
+- **Servers.** Test only on the test server (`runner-01.automaton.monster`). Touch production (`automaton.monster`) only when the owner asks or approves. Agents on the test server run as the `agent` user, not root; root work goes to the owner or the orchestrator.
+- **Sign-up.** Self sign-up is disabled on purpose. Never re-enable it, insert users into the database, or bypass the invite flow; users come only from an administrator's invite or creation.
+- **Ask first** before merging migrations that drop or rewrite data, changes that widen access or change sign-in, releases, or anything touching production.
+- **Test credentials** live in `~/.config/automaton-test/accounts.env` on the test server (and the owner's PC). Never print, commit or post them. Read values literally (the file can have CRLF line endings and values with `$`); never `source` it.
+- **Issues and the board.** Issue titles say what the work does, without plan or step numbers. Each issue belongs under a parent issue (its plan) and on the [roadmap board](https://github.com/users/rzvdaniel/projects/1) with Status, Priority and Plan set. Changing a single-select field's options through the API clears that field on every item: save all values first and set them again afterwards.
+- **One agent per issue.** Comment on an issue (or label it `agent:in-progress`) before starting, and don't pick up an issue another agent is working on. Each agent uses its own branches and worktree.
+- **Attribution.** All agents use the owner's GitHub login. End commit messages and PR descriptions with a line naming the agent, for example `Co-Authored-By: Codex <noreply@openai.com>` or the Claude equivalent.
+- **Finish what you start, or leave it clearly open:** report what was verified, what wasn't, and post anything a later agent needs on the issue, not only in your conversation.
+
 ## Core rules
 
 - Do not edit unrelated code, generated output, runtime state, secrets, `.env` files, local databases, or build artifacts.
