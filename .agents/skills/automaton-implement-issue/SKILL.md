@@ -59,3 +59,5 @@ as you go; the task is not done until step 8 is.
 A short list: what changed, tests, the release and test-server version, whether the `e2e-` items were removed, and
 anything waiting for the owner. For each end-to-end check, give what was run and what came back (status code,
 command output or screenshot path). Mark anything you did not check as "not checked", with the reason.
+Do not keep an issue open for checks you can run yourself on the test server (browser, Studio buttons, screenshots).
+Only something that truly needs the owner stays, as its own issue linked from the handoff.

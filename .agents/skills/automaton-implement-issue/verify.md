@@ -53,9 +53,15 @@ Against the test server API, the CLI and Studio, check:
 - each role boundary: a regular user and a stranger are refused, a plain Admin versus a SysAdmin;
 - the error messages a person will see.
 
-Check pages in a browser with `agent-browser` (see `AGENTS.md`; on the test server `/home/agent/ab-login.sh` and
-`ab-shot.sh` log in and take screenshots), or Claude in Chrome on the owner's PC, following the studio-design visual
-checklist. Record what passed and what you could not check.
+Check pages in a browser yourself with `agent-browser` (see `AGENTS.md`; on the test server `/home/agent/ab-login.sh`
+and `ab-shot.sh` log in and take screenshots), following the studio-design visual checklist. When the change is a Studio
+action (a button, a form), do it by clicking in Studio with `agent-browser`, not through the API. Record what passed
+and what you could not check.
+
+Screenshots for a PR: GitHub has no upload API, so push them to the orphan branch `pr-screenshots` under `pr-<N>/`
+(create the branch with `git switch --orphan pr-screenshots` if it does not exist; never merge it) and embed them in
+the PR comment as `![name](https://raw.githubusercontent.com/rzvdaniel/automaton/pr-screenshots/pr-<N>/name.png)`.
+The repository is public: use only `e2e-` test data and no passwords, tokens or keys in the shot.
 
 After every test-server upgrade, also run the Studio smoke checks (`src/automaton-studio-vue/smoke/README.md`:
 `npm run smoke` with `AUTOMATON_TEST_STUDIO_URL` set to the server's real Studio domain). They are read-only,
