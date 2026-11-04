@@ -1,6 +1,6 @@
 # Automaton roadmap
 
-Updated: 3 November 2026.
+Updated: 4 November 2026.
 
 ## Product
 
@@ -24,12 +24,13 @@ Each plan is a file named after the plan (for example `self-maintenance.md`), wi
 
 | Plan | Status |
 | --- | --- |
-| [PostgreSQL](postgresql.md) | **Next** ([#584](https://github.com/rzvdaniel/automaton/issues/584)): move from MySQL before the public launch; .NET 10 follows on Npgsql |
-| [.NET 10 LTS](dotnet-10.md) | **In progress** ([#492](https://github.com/rzvdaniel/automaton/issues/492)): retarget done (#493), rollout open (#494). .NET 9 support ends 10 November 2026, after which it gets no security fixes. Touches every project, so it goes alone, before other code work |
-| [Public launch](public-launch.md) | Planned ([#560](https://github.com/rzvdaniel/automaton/issues/560)): ready for visitors from articles: fresh-server install pass (after .NET 10), security policy, public pages, community setup, demo |
+| [Public launch](public-launch.md) | **In progress** ([#560](https://github.com/rzvdaniel/automaton/issues/560)): ready for visitors from articles: fresh-server install pass (after .NET 10), security policy, public pages, community setup, demo |
 | [Self-maintenance](self-maintenance.md) | **In progress** ([#490](https://github.com/rzvdaniel/automaton/issues/490)): app secrets, shared vault, app permissions and the secret audit log done; next encrypted backup download (#484) and our nightly maintenance apps (#556) |
+| [After launch](after-launch.md) | Planned ([#627](https://github.com/rzvdaniel/automaton/issues/627)): simpler docs (AI-friendly, `llms.txt`), website, README and Studio; update from Studio and the CLI |
 | [App install and shared stores](app-install-and-stores.md) | Planned ([#551](https://github.com/rzvdaniel/automaton/issues/551)): install any store app from Studio, from this or another server; deploy from stored source (#552) can start now |
 | [Enhancements](enhancements.md) | Ongoing ([#495](https://github.com/rzvdaniel/automaton/issues/495)): independent improvements and bugs not part of another plan |
+| [PostgreSQL](postgresql.md) | Done ([#584](https://github.com/rzvdaniel/automaton/issues/584)): test server and production on PostgreSQL since 3–4 November 2026 (server 0.2.x) |
+| [.NET 10 LTS](dotnet-10.md) | Done ([#492](https://github.com/rzvdaniel/automaton/issues/492)): all projects on .NET 10, rolled out in server 0.2.x |
 | [Self-hosted core](self-hosted-core.md) | Done (M1–M4). Two-user isolation and restart/replay checked on the test server: no cross-user access; #521 closed; the fixes are verified in 0.1.33 (#571, #572, #576, #581) or merged for the next release (#588, #577) |
 | [App store](app-store.md) | Done (server 0.1.12). Follow-up ideas only |
 
