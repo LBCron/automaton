@@ -69,6 +69,30 @@ export interface InstallationBackup {
   restoreCommand: string
 }
 
+export interface InstallationUpdateRun {
+  state: 'starting' | 'running' | 'succeeded' | 'failed' | 'unknown'
+  requestedVersion: string | null
+  fromVersion: string | null
+  toVersion: string | null
+  startedAtUtc: string | null
+  finishedAtUtc: string | null
+  exitCode: number | null
+  recoveryBackup: string | null
+  requestedBy: string | null
+  message: string | null
+}
+
+export interface InstallationUpdateStatus {
+  currentVersion: string | null
+  triggerAvailable: boolean
+  run: InstallationUpdateRun | null
+  log: string | null
+  stale: boolean
+  requestPending: boolean
+  requestAgeSeconds: number | null
+  hint: string | null
+}
+
 export interface InstallationBackupStatus {
   available: boolean
   lastAttemptAt: string | null

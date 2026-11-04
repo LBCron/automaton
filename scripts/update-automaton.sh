@@ -10,6 +10,7 @@ version=''
 bundle_archive=''
 bundle_checksum=''
 keep_backups=3
+allow_downgrade=false
 while (($#)); do
     case "$1" in
         --version) version="${2:?Missing release version}"; shift 2 ;;
@@ -19,7 +20,8 @@ while (($#)); do
         --config-dir) config_dir="${2:?Missing configuration directory}"; shift 2 ;;
         --backup-dir) backup_root="${2:?Missing backup directory}"; shift 2 ;;
         --keep-backups) keep_backups="${2:?Missing number of backups to keep}"; shift 2 ;;
-        --help) echo 'Usage: sudo bash update-automaton.sh [--version server-vX.Y.Z] [--bundle automaton-server.tar.gz --checksum automaton-server.tar.gz.sha256] [--install-dir PATH] [--config-dir PATH] [--backup-dir PATH] [--keep-backups N]'; echo 'Without --version, selects the latest stable published server distribution. Offline bundles require --version.'; echo 'After a successful update, keeps the newest N update backups (default 3) and removes the previous release application images.'; exit 0 ;;
+        --allow-downgrade) allow_downgrade=true; shift ;;
+        --help) echo 'Usage: sudo bash update-automaton.sh [--version server-vX.Y.Z] [--bundle automaton-server.tar.gz --checksum automaton-server.tar.gz.sha256] [--install-dir PATH] [--config-dir PATH] [--backup-dir PATH] [--keep-backups N] [--allow-downgrade]'; echo 'Without --version, selects the latest stable published server distribution. Offline bundles require --version.'; echo 'After a successful update, keeps the newest N update backups (default 3) and removes the previous release application images.'; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
@@ -96,7 +98,7 @@ if [[ -z "${AUTOMATON_UPDATER_FROM_BUNDLE:-}" ]] && ! cmp -s "$bundle/update.sh"
     echo "Continuing with the $version updater."
     exec env AUTOMATON_UPDATER_FROM_BUNDLE=1 bash "$bundle/update.sh" --version "$version" \
         --bundle "$working/automaton-server.tar.gz" --checksum "$working/automaton-server.tar.gz.sha256" \
-        --install-dir "$install_dir" --config-dir "$config_dir" --backup-dir "$backup_root" --keep-backups "$keep_backups"
+        --install-dir "$install_dir" --config-dir "$config_dir" --backup-dir "$backup_root" --keep-backups "$keep_backups" $($allow_downgrade && echo --allow-downgrade)
 fi
 # Nightly backups are on by default. Also runs when the release is already installed, so servers whose
 # previous updater predates backups get them by running update.sh again. Failures only warn.
@@ -112,6 +114,14 @@ ensure_backups() {
     fi
     echo "Warning: nightly backups could not be enabled. Run: sudo bash $install_dir/backup.sh --install-timer" >&2
 }
+# Updates requested from Studio or the CLI run through a root systemd path unit. Installs its script, directories and
+# units; the directories must exist before the API container is recreated with them mounted. Failures only warn.
+ensure_update_trigger() {
+    if [[ -f "$bundle/update-from-request.sh" ]]; then install -m 0700 "$bundle/update-from-request.sh" "$install_dir/update-from-request.sh"; fi
+    [[ -f "$install_dir/update-from-request.sh" ]] || return 0
+    bash "$install_dir/update-from-request.sh" --install-units --install-dir "$install_dir" \
+        || { echo "Updates from Studio could not be enabled; nothing was changed. Fix it, then rerun: sudo bash $install_dir/update-from-request.sh --install-units" >&2; exit 1; }
+}
 # Releases run on PostgreSQL. An installation that still runs MySQL must not be switched silently:
 # its data has to be migrated first, and the old backup and restore scripts stay in place until then.
 if grep -q '^MYSQL_IMAGE=' "$install_dir/release.env"; then
@@ -122,12 +132,17 @@ fi
 if cmp -s "$bundle/release.env" "$install_dir/release.env"; then
     echo 'This release is already installed.'
     ensure_backups
+    ensure_update_trigger
     exit 0
 fi
 if [[ -f "$install_dir/version" ]]; then
     current_version=$(cat "$install_dir/version")
     [[ "$current_version" =~ ^server-v[0-9]+\.[0-9]+\.[0-9]+([.-][a-zA-Z0-9.-]+)?$ ]] || { echo 'Installed version marker is invalid.' >&2; exit 1; }
-    dpkg --compare-versions "${version#server-v}" gt "${current_version#server-v}" || { echo 'Choose a newer server release.' >&2; exit 1; }
+    if $allow_downgrade; then
+        dpkg --compare-versions "${version#server-v}" ne "${current_version#server-v}" || { echo 'That release is already installed.' >&2; exit 1; }
+    else
+        dpkg --compare-versions "${version#server-v}" gt "${current_version#server-v}" || { echo 'Choose a newer server release.' >&2; exit 1; }
+    fi
 fi
 python3 - "$install_dir/release.env" "$bundle/release.env" <<'PY'
 import re, sys
@@ -242,6 +257,7 @@ if [[ "$old_runner_image" != "$new_runner_image" ]]; then
     fi
     recreate=(--force-recreate)  # API reads the updated settings file only at startup.
 fi
+ensure_update_trigger
 echo 'Backup verified. Pulling release images.'
 "${new_compose[@]}" pull "${application_services[@]}"
 echo "Updating ${application_services[*]}."
