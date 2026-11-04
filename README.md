@@ -19,8 +19,8 @@ Compared with a cloud provider you gain control and data location, with costs se
 ## Quickstart
 
 1. Install the server on an Ubuntu 24.04+ host (below) and create your administrator in Studio.
-2. Add a Runner from Studio.
-3. Install the CLI, `automaton login` against your server, then `automaton new "My App"`.
+2. Install the CLI, log in with `automaton login --server https://api.your-domain.com`, then add a Runner with `automaton runners install --name main --ssh user@host` (or `--local` on the host; add `--yes` for automation). The target is Ubuntu with Docker running, and the Machine Management Runner has Docker access on its host.
+3. Run `automaton new "My App"`.
 4. Ask your coding agent to build the app, then `automaton validate` and `automaton deploy`.
 
 ## Install
@@ -39,7 +39,7 @@ The installer selects the latest stable release, verifies the bundle, installs D
 
 1. Open `https://studio.your-domain.com/install`.
 2. Read `sudo cat /etc/automaton/secrets/setup-token` on the server and create your administrator in Studio.
-3. In **Runners**, install a Machine Management Runner on this machine or another server. Apps need a Runner, including static sites.
+3. Use `automaton runners install --name main --local` on this machine, or `--ssh user@host` from another machine (Ubuntu with Docker running); add `--yes` to skip the confirmation in automation. Apps need a Runner, including static sites.
 
 ## Build and publish an app
 
