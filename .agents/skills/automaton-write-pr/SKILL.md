@@ -1,4 +1,10 @@
-# Pull request
+---
+name: automaton-write-pr
+description: Use whenever you open a pull request in Automaton or automaton-apps, from any flow, so every PR says what changed, how it was verified, what could break, and never closes its issue before production.
+license: Apache-2.0
+---
+
+# Writing a pull request
 
 ## Title
 
@@ -13,10 +19,18 @@ Refs #<issue>.
 - **Docs:** which Admin or architecture docs were updated, or why none were needed.
 - **Tests:** what was added, and what ran (project names, pass counts).
 
+**How verified:** end-to-end on the test server (link the proof) / unit tests only (why) / not yet (after release).
+**Risk:** what could break and how to roll back, in one line.
+
 **Not in this PR:** anything from the issue left for later, with the follow-up issue number.
 ```
 
-Never write `Closes #N` or `Fixes #N`: an issue closes only when its change is live on production (step 8). Use
+For Studio or website changes, add a screenshot (push it to the `pr-screenshots` branch and link it).
+
+"How verified" usually says "not yet" when the PR opens, because test-server checks run after merge. Update it in a
+comment when the proof is attached.
+
+Never write `Closes #N` or `Fixes #N`: an issue closes only when its change is live on production. Use
 `Part of #N` when the PR delivers only part of the issue.
 
 ## Documentation

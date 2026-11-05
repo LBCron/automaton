@@ -22,6 +22,8 @@ Read the matching skill before changing the related area:
 | Roadmaps, architecture guides, or other repository documentation | [Documentation maintenance](.agents/skills/documentation-maintenance/SKILL.md) |
 | User-facing Studio UI, theme tokens, or visual verification | [Studio design](.agents/skills/studio-design/SKILL.md) |
 | Reviewing any pull request, or merging one | [PR review](.agents/skills/pr-review/SKILL.md) |
+| Creating any GitHub issue | [Write issue](.agents/skills/automaton-write-issue/SKILL.md) |
+| Opening any pull request | [Write PR](.agents/skills/automaton-write-pr/SKILL.md) |
 | Only when the owner starts it with `/automaton-implement-issue` (or asks for it by name): an issue end to end, from issue and PR through review, merge, release, test-server upgrade and verification as real users | [Automaton implement issue](.agents/skills/automaton-implement-issue/SKILL.md) |
 
 The skills listed above are the repository contract. Other folders under `.agents/skills/` are developer-local. Do not add, expand, or commit local skills unless the task names that work.

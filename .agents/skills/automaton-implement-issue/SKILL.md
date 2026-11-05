@@ -28,7 +28,7 @@ a step when you reach it.
 Before starting, create a to-do item for each of steps 1–8, naming its detail file where it has one. Tick them off
 as you go; the task is not done until step 8 is.
 
-1. **Issue.** Find the issue. If there is none, create it first (`issue.md`). If no task was given at all, take the
+1. **Issue.** Find the issue. If there is none, create it first ([write-issue skill](../automaton-write-issue/SKILL.md)). If no task was given at all, take the
    open Todo item with the highest priority on the board and say which one you took. Read its parent and blockers, restate
    the done criteria, and set the board Status to In Progress.
 2. **Build.** Branch from `main`. For a bug, reproduce it first on the surface where it shows (API, CLI or Studio),
@@ -37,11 +37,10 @@ as you go; the task is not done until step 8 is.
 3. **Test locally.** Run the affected test projects and, for Studio changes, `npx vue-tsc --noEmit -p tsconfig.app.json`
    in `src/automaton-studio-vue`. `main` is green, so every failure is yours to fix. Never skip or delete a failing
    test to get green unless the test itself is wrong, and say so in the PR.
-4. **PR.** Open it as `pr.md` describes and wait for CI. An empty check list means the run has not started; it is not
+4. **PR.** Open it as the [write-PR skill](../automaton-write-pr/SKILL.md) describes and wait for CI. An empty check list means the run has not started; it is not
    a pass.
 5. **Review.** Get an independent review from a subagent (`review.md`). At most two rounds.
-6. **Merge.** Squash-merge and delete the branch when the final commit's checks pass, the last review found nothing
-   above low severity, and you are satisfied. Ask the owner first only for:
+6. **Merge.** Run the merge gate (below), then squash-merge and delete the branch. Ask the owner first only for:
    - database migrations that drop or rewrite data;
    - changes that let more people do something (widening access), or change how people sign in;
    - anything that touches production;
@@ -51,15 +50,41 @@ as you go; the task is not done until step 8 is.
    Real-server testing happens here, after merge. If a check fails, fix forward: a small follow-up PR (same review and
    CI), a new release and a re-check. Revert instead only when the fix is not quick or the failure blocks other work on
    the test server. Production is updated only after the proof passes, and only when the owner asks.
-8. **Close out.** Done means live on production. Attach the `proof` artifact to the issue and set its `verified` or
-   `verification-failed` label (`verify.md`), comment the end-to-end results (pass or fail per check) and every
+8. **Close out.** Done means live on production. Attach the `proof` artifact to the issue and set its label
+   (`verified`, `verified-partial` or `verification-failed`, see Labels below and `verify.md`), comment the end-to-end results (pass or fail per check) and every
    administrator action on the PR, and link that comment from the issue. Leave the issue open with board Status In
    Progress: `is:open label:verified` is what the next production update ships. When the owner updates production,
-   whoever updates it checks production and then closes each `verified` issue in that release with a comment naming the
-   version, which sets the board Status to Done. Remove the `e2e-` items you created (`verify.md`), open issues for gaps
-   you found (`issue.md`), and tell the owner what is left for them, with links. If testing showed the docs are wrong,
+   whoever updates it checks production, runs the close gate, adds `live` and closes each issue in that release with a
+   comment naming the version, which sets the board Status to Done. Remove the `e2e-` items you created (`verify.md`),
+   open issues for gaps you found (write-issue skill), and tell the owner what is left for them, with links. If testing showed the docs are wrong,
    or the issue completes a roadmap step, fix the docs or the status in `docs/roadmap/README.md` in a small follow-up
    PR.
+
+## Gates
+
+Check each item from GitHub itself (`gh pr view`, `gh pr checks`, `gh api .../issues/N/artifacts`), not from memory,
+and paste the result into your handoff. A missing item stops the step; fix it or report it as a gap. The Flow check
+app (#693) automates this list once it exists.
+
+**Merge gate** (step 6):
+- a formal review (`gh pr review`) from an independent reviewer, covering the final commit; if you pushed fixes after
+  it, the reviewer saw them (a second round) or they only touch text the review asked for;
+- the last review found nothing above low severity;
+- the PR diff contains the tests the PR claims (`gh pr diff --name-only`);
+- CI passed on the final commit.
+
+**Close gate** (production update, step 8):
+- the merge gate held;
+- the issue has a `proof` artifact naming the release and how it was checked;
+- the label is `verified` (a `verified-partial` issue closes only when the owner accepts the gap, said in a comment);
+- the production version contains the merge commit.
+
+## Labels
+
+- `verified`: every "Done when" check passed end to end on the test server, with a proof artifact.
+- `verified-partial`: only unit tests or part of the checks ran; the proof says what is missing and why.
+- `verification-failed`: a check failed; fix forward.
+- `live`: set by whoever updates production, just before closing.
 
 ## Handoff
 

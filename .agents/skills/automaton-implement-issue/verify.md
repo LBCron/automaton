@@ -89,8 +89,8 @@ The page lists each done criterion from the issue, the evidence for it (the comm
 to a screenshot) and pass, fail or not checked with the reason. Keep it plain: one `<table>` (criterion, result,
 evidence), inline `<style>` only, no scripts, no embedded images. Running `proof.py` again replaces the issue's `proof`.
 
-Then label the issue: `verified` when every criterion passes (or is "not checked" with a reason the owner accepted),
-`verification-failed` when a check fails. Swap the label when the fix-forward release passes its re-check.
+Then label the issue: `verified` when every "Done when" check passed end to end, `verified-partial` when only unit
+tests or some of the checks ran (say which in the proof), `verification-failed` when a check fails. Swap the label when the fix-forward release passes its re-check.
 
 Screenshots: push them to the orphan branch `pr-screenshots` under `pr-<N>/` (create it with
 `git switch --orphan pr-screenshots` if it does not exist; never merge or delete it). Link them, do not embed them:
