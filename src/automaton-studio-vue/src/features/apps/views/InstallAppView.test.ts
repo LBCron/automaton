@@ -52,5 +52,22 @@ describe('InstallAppView', () => {
       applicationId: 'new-1', actionKey: 'upload', scheduleType: 'Cron', cronExpression: '30 3 * * *',
     }))
     expect(wrapper.text()).not.toContain('shh')
+    expect(wrapper.get('.install-progress').text()).toContain('Installed')
+    expect(wrapper.get('.install-progress').text()).toContain('Deploy and start the app')
+    expect(wrapper.get('.install-progress').text()).toContain('Nightly runs on cron 30 3 * * *')
+    expect(wrapper.text()).toContain('Open the installed app')
+  })
+
+  it('shows the form again with the error when nothing was created', async () => {
+    vi.mocked(appsService.getInstallSource).mockResolvedValue({ id: 'src-1', name: 'Off-site Backup', creatorDisplayName: 'Me', application: {} })
+    vi.mocked(appsService.install).mockRejectedValue(new Error('Name already used'))
+    const wrapper = mount(InstallAppView, { global: { plugins: [PrimeVue] } })
+    await flushPromises()
+    await wrapper.findAll('button').find((b) => b.text().includes('Install'))!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.install-progress').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Name already used')
+    expect(wrapper.find('#install-name').exists()).toBe(true)
   })
 })

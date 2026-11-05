@@ -140,6 +140,8 @@ export interface ApplicationContract {
   storage: ApplicationStorageSpec
   secrets?: ApplicationSecretDeclaration[]
   permissions?: string[]
+  isStaticSite?: boolean
+  compose?: unknown
 }
 
 export interface ApplicationSecretDeclaration {
