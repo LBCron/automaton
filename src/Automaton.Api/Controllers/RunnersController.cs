@@ -4,23 +4,31 @@ using Automaton.Api.Services;
 using Automaton.Core.Enums;
 using Automaton.Core.Scripting.Engines;
 using Microsoft.AspNetCore.Authorization;
+using Automaton.Api.Config;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Automaton.Api.Controllers;
 
 public class RunnersController : BaseController
 {
     private readonly RunnerService runnersService;
-    public RunnersController(RunnerService runnersService)
+    private readonly string currentImage;
+    public RunnersController(RunnerService runnersService, IOptions<HostedRunnerOptions> hostedRunnerOptions)
     {
         this.runnersService = runnersService;
+        currentImage = hostedRunnerOptions.Value.DockerImage;
     }
 
     [HttpGet]
     [Authorize(Policy = "AllowApiKey")]
     public async Task<ActionResult<IEnumerable<RunnerDetails>>> Get([FromQuery] Guid? projectId, CancellationToken cancellationToken)
     {
-        return Ok(await runnersService.List(projectId, cancellationToken));
+        var runners = (await runnersService.List(projectId, cancellationToken)).ToList();
+        foreach (var runner in runners)
+            runner.UpgradeAvailable = !string.IsNullOrEmpty(runner.InstallationId)
+                && !RunnerUpgradeService.IsCurrent(runner.ImageDigest, currentImage);
+        return Ok(runners);
     }
 
     [HttpPost]
@@ -76,8 +84,31 @@ public class RunnersController : BaseController
         catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
     }
 
+    /// <summary>Upgrades an online Runner to the server's configured image.</summary>
     [HttpPost("{id}/upgrade")]
-    [Authorize]
+    [Authorize(Policy = "DeveloperApiAccess")]
+    public async Task<IActionResult> Upgrade(Guid id, [FromServices] RunnerUpgradeService upgrade, CancellationToken cancellationToken)
+    {
+        if (!AppChangeKeyScope.IsAllowed(User))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "This API key cannot upgrade Runners. Use a key with the Developer scope." });
+        try { return Accepted(await upgrade.StartAsync(id, cancellationToken)); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+    }
+
+    /// <summary>Reports whether a started upgrade is in progress, reconnected or rolled back.</summary>
+    [HttpGet("{id}/upgrade")]
+    [Authorize(Policy = "AllowApiKey")]
+    public async Task<IActionResult> UpgradeStatus(Guid id, [FromServices] RunnerUpgradeService upgrade, CancellationToken cancellationToken)
+    {
+        try { return Ok(await upgrade.StatusAsync(id, cancellationToken)); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+    }
+
+    /// <summary>The host command for upgrading an offline or broken Runner by hand.</summary>
+    [HttpPost("{id}/upgrade-command")]
+    [Authorize(Policy = "AllowApiKey")]
     public async Task<IActionResult> PrepareUpgrade(Guid id, [FromServices] RunnerUpgradeService upgrade,
         CancellationToken cancellationToken)
     {
