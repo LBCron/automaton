@@ -60,6 +60,7 @@ export interface App {
   created: string // ISO date string
   updated: string // ISO date string
   executionRunnerId?: string
+  canUpdate?: boolean // set on a single-app read
   // Project context
   scope: AccessScope
   projectId?: string
@@ -475,4 +476,12 @@ export interface SecretAuditEntry {
   appId?: string | null
   runnerId?: string | null
   delivered: SecretDelivery[]
+}
+
+export interface DeploymentOperation {
+  operationId: string
+  status: 'Pending' | 'Running' | 'Succeeded' | 'Failed'
+  success?: boolean | null
+  error?: string | null
+  result?: { message?: string | null } | null
 }
