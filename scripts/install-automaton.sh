@@ -26,7 +26,7 @@ while (($#)); do
         --install-docker) shift ;; # Accepted for commands written before Docker installation became automatic.
         --configure-only) configure_only=true; shift ;;
         --status) status_only=true; shift ;;
-        --help) printf '%s\n' 'Usage: sudo bash install-automaton.sh [--version server-vVERSION] [--domain example.com] [--email admin@example.com]' 'Installs Docker Engine and Compose automatically if missing. Existing Docker installations are preserved.' 'Without --version, a standalone installer selects the latest stable public server release; an extracted bundle installs its own version.' 'Optional: --install-dir PATH --config-dir PATH --public-ip ADDRESS --configure-only --status' 'Requires Ubuntu 24.04 or newer, public DNS and ports 80/443/5671. Optional --tls-mode cloudflare enables wildcard certificates.'; exit 0 ;;
+        --help) printf '%s\n' 'Usage: sudo bash install-automaton.sh [--version server-vVERSION] [--domain example.com] [--email admin@example.com]' 'Installs Docker Engine and Compose automatically on Ubuntu and Debian if missing (elsewhere, install Docker first). Existing Docker installations are preserved.' 'Without --version, a standalone installer selects the latest stable public server release; an extracted bundle installs its own version.' 'Optional: --install-dir PATH --config-dir PATH --public-ip ADDRESS --configure-only --status' 'Requires x86_64 Linux with systemd, public DNS and ports 80/443/5671. Optional --tls-mode cloudflare enables wildcard certificates.'; exit 0 ;;
         *) printf 'Unknown option: %s\n' "$1" >&2; exit 1 ;;
     esac
 done
@@ -52,17 +52,27 @@ if [[ -e "$install_dir/compose.override.yaml" || -L "$install_dir/compose.overri
     exit 1
 fi
 # Check the host before installing bootstrap dependencies or downloading a release.
-source /etc/os-release
-if [[ "$ID" != ubuntu ]] || ! dpkg --compare-versions "$VERSION_ID" ge 24.04; then
-    echo 'This installer supports Ubuntu 24.04 or newer.' >&2
-    exit 1
-fi
-[[ "$(uname -m)" == x86_64 ]] || { echo 'The initial server release supports x86_64 servers.' >&2; exit 1; }
+[[ "$(uname -s)" == Linux && "$(uname -m)" == x86_64 ]] || { echo "Automaton needs an x86_64 Linux server (found $(uname -s) $(uname -m))." >&2; exit 1; }
+[[ -d /run/systemd/system ]] || { echo 'Automaton needs a Linux server that runs systemd.' >&2; exit 1; }
+ID=''; ID_LIKE=''; VERSION_CODENAME=''; PRETTY_NAME='this Linux distribution'
+[[ -r /etc/os-release ]] && source /etc/os-release
+# Packages are installed automatically only where apt is available; elsewhere the person installs them first.
+install_packages() {
+    if command -v apt-get >/dev/null; then
+        apt-get update
+        DEBIAN_FRONTEND=noninteractive apt-get install -y "$@"
+    else
+        echo "Install these packages with your package manager, then run the installer again: $*" >&2
+        exit 1
+    fi
+}
+# Docker publishes apt repositories for Ubuntu and Debian themselves (not for derivatives with their own codenames).
+docker_apt_distribution=''
+[[ "$ID" == ubuntu || "$ID" == debian ]] && docker_apt_distribution=$ID
 # Download the complete release when this script was downloaded by itself.
 if [[ ! -f "$bundle_dir/release.env" ]]; then
     if ! command -v python3 >/dev/null || ! command -v curl >/dev/null; then
-        apt-get update
-        apt-get install -y ca-certificates curl python3
+        install_packages ca-certificates curl python3
     fi
     if [[ -z "$version" ]]; then
         version=$(python3 - <<'PY'
@@ -99,12 +109,15 @@ PY
 fi
 # Do not replace an existing Docker engine.
 ensure_docker_repository() {
-    apt-get update
-    apt-get install -y ca-certificates curl
+    if [[ -z "$docker_apt_distribution" || -z "$VERSION_CODENAME" ]] || ! command -v apt-get >/dev/null; then
+        echo "Install Docker Engine and the Docker Compose plugin on $PRETTY_NAME (https://docs.docker.com/engine/install/), then run the installer again." >&2
+        exit 1
+    fi
+    install_packages ca-certificates curl
     install -m 0755 -d /etc/apt/keyrings
-    curl --fail --proto '=https' https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    curl --fail --proto '=https' "https://download.docker.com/linux/$docker_apt_distribution/gpg" -o /etc/apt/keyrings/docker.asc
     chmod a+r /etc/apt/keyrings/docker.asc
-    printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu %s stable\n' "$(dpkg --print-architecture)" "$VERSION_CODENAME" > /etc/apt/sources.list.d/automaton-docker.list
+    printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/%s %s stable\n' "$(dpkg --print-architecture)" "$docker_apt_distribution" "$VERSION_CODENAME" > /etc/apt/sources.list.d/automaton-docker.list
     apt-get update
 }
 if ! command -v docker >/dev/null; then
@@ -114,6 +127,7 @@ if ! command -v docker >/dev/null; then
 fi
 docker info >/dev/null
 if ! docker compose version >/dev/null; then
+    command -v apt-get >/dev/null || { echo 'Install the Docker Compose plugin (https://docs.docker.com/compose/install/linux/), then run the installer again.' >&2; exit 1; }
     if apt-cache show docker-compose-v2 >/dev/null 2>&1; then
         apt-get install -y docker-compose-v2
     else
@@ -124,7 +138,7 @@ if ! docker compose version >/dev/null; then
     fi
     docker compose version >/dev/null
 fi
-command -v python3 >/dev/null && python3 -c 'import cryptography' 2>/dev/null || { apt-get update; apt-get install -y python3 python3-cryptography; }
+command -v python3 >/dev/null && python3 -c 'import cryptography' 2>/dev/null || install_packages python3 python3-cryptography
 if [[ -f "$install_dir/release.env" ]] && ! cmp -s "$bundle_dir/release.env" "$install_dir/release.env"; then
     echo 'A different release is already installed. This command resumes installation; an upgrade requires a separate planned migration.' >&2
     exit 1

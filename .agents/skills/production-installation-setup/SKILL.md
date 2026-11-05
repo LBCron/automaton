@@ -10,7 +10,7 @@ Use this skill when preparing or reviewing a fresh Automaton production installa
 
 ## Fresh server installer
 
-For a new standalone server, use [the public installation guide](../../../docs/prod/install-automaton.md), `scripts/install-automaton.sh`, and the release bundle under `docker/install/`. The supported target is Ubuntu 24.04 or newer on x86_64 with public DNS; installing Docker requires Docker's Ubuntu apt repository to support the host codename. The release workflow publishes prebuilt, digest-pinned server images and a checksum-verified bundle. A fresh install stores protected settings outside the checkout in `/etc/automaton`; Studio `/install` requires its generated setup token. Re-running preserves credentials. Existing installations need a reviewed adoption of their credentials, volumes, infrastructure versions and routing; the fresh installer does not migrate them.
+For a new standalone server, use [the public installation guide](../../../docs/prod/install-automaton.md), `scripts/install-automaton.sh`, and the release bundle under `docker/install/`. The supported target is x86_64 Linux with systemd and public DNS; the installer adds Docker from Docker's apt repository on Ubuntu and Debian, and elsewhere asks the person to install Docker first. The release workflow publishes prebuilt, digest-pinned server images and a checksum-verified bundle. A fresh install stores protected settings outside the checkout in `/etc/automaton`; Studio `/install` requires its generated setup token. Re-running preserves credentials. Existing installations need a reviewed adoption of their credentials, volumes, infrastructure versions and routing; the fresh installer does not migrate them.
 
 ## Find the authoritative settings
 

@@ -1,17 +1,17 @@
 ---
 title: Install the server
-description: Install Automaton (Studio, API, app store, PostgreSQL, RabbitMQ, Traefik) on one Ubuntu server with a domain, using one command.
+description: Install Automaton (Studio, API, app store, PostgreSQL, RabbitMQ, Traefik) on one x86_64 Linux server with a domain, using one command.
 ---
 
 # Install the server
 
-This page installs your own Automaton server on one Ubuntu machine. Next steps: [create the first administrator](./first-admin), then [add a Runner](./deploy-runner).
+This page installs your own Automaton server on one x86_64 Linux machine. Next steps: [create the first administrator](./first-admin), then [add a Runner](./deploy-runner).
 
 Already have a team server? Ask its administrator for the API URL and go to [Create your first app](./getting-started).
 
 ## Prerequisites
 
-- An x86_64 Ubuntu 24.04 server with sudo access, outbound internet and at least 10 GiB free disk space.
+- An x86_64 Linux server with systemd, sudo access, outbound internet, at least 2 GB of RAM and 10 GiB of free disk space. On Ubuntu and Debian the installer adds Docker itself; on other distributions, [install Docker Engine and the Compose plugin](https://docs.docker.com/engine/install/) first.
 - A domain you can edit DNS for, and an email for certificate notices.
 - Inbound TCP ports 80 and 443 (HTTPS) and 5671 (TLS Runner broker). Keep the `api` hostname directly reachable on 5671.
 - DNS records pointing to the server's public IP, set to DNS only (no proxy). Pick one of:

@@ -1,6 +1,6 @@
 ---
 title: Add a Runner
-description: Install a Machine Management Runner on an Ubuntu host with the CLI so Automaton can run your apps.
+description: Install a Machine Management Runner on a Linux host with the CLI so Automaton can run your apps.
 ---
 
 # Add a Runner
@@ -10,7 +10,7 @@ A Runner is the trusted service on a machine that builds and runs your apps in D
 ## Prerequisites
 
 - A server with an administrator ([first administrator](./first-admin)) and the CLI signed in: `automaton login --server https://api.example.com` (see [Create your first app](./getting-started)).
-- An Ubuntu host with Docker running. It can be the Automaton server itself or another machine.
+- An x86_64 Linux host with Docker running. It can be the Automaton server itself or another machine.
 - The Runner controls the host's Docker. Install it only on machines you trust.
 
 ## Steps

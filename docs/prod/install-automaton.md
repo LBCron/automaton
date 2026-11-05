@@ -2,7 +2,7 @@
 
 This is the detailed reference for operators and maintainers (custom paths, protected settings, adopted installations, recovery, publishing a release). For the short task pages use the website docs: [install](../../src/automaton-vue/docs/install-server.md), [first administrator](../../src/automaton-vue/docs/first-admin.md), [update](../../src/automaton-vue/docs/update-server.md), [backup and restore](../../src/automaton-vue/docs/backup-restore.md). Those pages are the source for the quick path; this page is the source for everything beyond it.
 
-The server release installs API, Studio, the public app store, Worker, PostgreSQL 16, RabbitMQ and Traefik together with Docker Compose. The installer supports **Ubuntu 24.04 or newer on x86_64** with public DNS. Use an Ubuntu release supported by Docker; LTS releases are recommended for servers. When installing Docker, the installer uses Docker's Ubuntu apt repository, which must publish packages for the host's Ubuntu codename. HTTPS uses HTTP validation by default; Cloudflare DNS validation is optional for wildcard certificates. It uses prebuilt images, generates unique credentials and stores configuration outside any Git checkout.
+The server release installs API, Studio, the public app store, Worker, PostgreSQL 16, RabbitMQ and Traefik together with Docker Compose. The installer supports **x86_64 Linux with systemd** and public DNS. On Ubuntu and Debian it installs Docker Engine and Compose from Docker's apt repository when missing; on other distributions, install Docker Engine and the Compose plugin first and the installer uses them. Ubuntu LTS is the most tested. HTTPS uses HTTP validation by default; Cloudflare DNS validation is optional for wildcard certificates. It uses prebuilt images, generates unique credentials and stores configuration outside any Git checkout.
 
 A server release must first be published by the maintainer using the **Publish Automaton Server** GitHub Actions workflow. Run it from the repository's Actions tab on `main`, choose **Run workflow**, and enter a new version such as `0.1.0` (without the `server-v` prefix). It builds and publishes the API, Worker, Studio and store images, resolves infrastructure image digests, runs an isolated installation smoke test, then creates a GitHub release tagged `server-v0.1.0` with the installer, bundle and checksum. The commands below require that release; source changes alone do not publish an installer release or upgrade any running instance.
 
@@ -28,7 +28,7 @@ Before you start, check three things that cost time in that run:
 
 - **SSH key.** Select the key you will actually connect with when you create the server, then check it with `ssh root@SERVER_IP true`. Key-created Ubuntu servers refuse root password logins, and provider web consoles often mistype symbols, so fixing a wrong key later is slow.
 - **DNS only.** If your DNS is at Cloudflare, set these records to *DNS only* (grey cloud). Proxied records break certificate issuance and the Runner broker.
-- **Ubuntu 24.04.** It is the tested release; newer releases are not yet tested. Run `apt update && apt upgrade -y` first, because a new image can have many pending security updates.
+- **Updates first.** Install pending updates (for example `apt update && apt upgrade -y`) and reboot if asked, because a new image can have many pending security updates.
 
 Use records that reach the server directly for setup. Keep the API hostname directly reachable afterward because Runners use its TLS broker port 5671. Allow inbound TCP 80 and 443 for HTTPS and 5671 for the TLS Runner broker. PostgreSQL, plaintext RabbitMQ and RabbitMQ administration are not exposed on host ports. Your server must have outgoing internet access to download images and request certificates.
 
@@ -57,7 +57,7 @@ less automaton-server/install.sh
 sudo bash automaton-server/install.sh
 ```
 
-The version above is a placeholder. The installer installs Docker Engine from Docker's official Ubuntu repository if it is missing. A missing Compose plugin is installed automatically, including on a server with an existing Docker Engine. The installer first tries Ubuntu's `docker-compose-v2` package and falls back to Docker's `docker-compose-plugin` package. It does not replace existing Docker installations or remove conflicting packages automatically.
+The version above is a placeholder. On Ubuntu and Debian the installer installs Docker Engine from Docker's official apt repository if it is missing; elsewhere it stops and asks you to install Docker first. A missing Compose plugin is installed automatically, including on a server with an existing Docker Engine. The installer first tries Ubuntu's `docker-compose-v2` package and falls back to Docker's `docker-compose-plugin` package. It does not replace existing Docker installations or remove conflicting packages automatically.
 
 The standalone installer works without a GitHub account. It selects the newest stable `server-vX.Y.Z` release by default and verifies the downloaded bundle's checksum. The updater is included in the installation and is also available as a public release asset if it must be transferred separately.
 
@@ -87,7 +87,7 @@ Under **Admin → Installation**, a system administrator can check database and 
 
 ### Add a Runner
 
-After creating an administrator and approving `automaton login --server https://api.your-domain.com`, install a **Machine Management Runner** on the server (Ubuntu with Docker running) with `automaton runners install --name main --local`, which asks you to confirm the Docker host access. From another machine, use `--ssh user@host`. For automation, add `--yes` to acknowledge the access without prompting. `--print-command` displays a one-time secret for manual installation; keep it private and run it before the printed expiry. The CLI waits for the Runner to connect and can add it to a project with `--project NAME`. You can also install through Studio. Follow [Self-hosted Runners](self-hosted-runners.md) for host requirements and the trust boundary.
+After creating an administrator and approving `automaton login --server https://api.your-domain.com`, install a **Machine Management Runner** on the server (Linux with Docker running) with `automaton runners install --name main --local`, which asks you to confirm the Docker host access. From another machine, use `--ssh user@host`. For automation, add `--yes` to acknowledge the access without prompting. `--print-command` displays a one-time secret for manual installation; keep it private and run it before the printed expiry. The CLI waits for the Runner to connect and can add it to a project with `--project NAME`. You can also install through Studio. Follow [Self-hosted Runners](self-hosted-runners.md) for host requirements and the trust boundary.
 
 ## Configuration and secrets
 

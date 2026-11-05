@@ -5,7 +5,7 @@ description: Who Automaton is for, who it is not for, and how it compares with a
 
 # Is Automaton for you?
 
-Automaton is a self-hosted platform for deploying web apps, APIs and scheduled jobs on servers you own or rent. You install it on an Ubuntu server, build apps with your own coding agent and the CLI, and manage them in your own Studio.
+Automaton is a self-hosted platform for deploying web apps, APIs and scheduled jobs on servers you own or rent. You install it on an x86_64 Linux server, build apps with your own coding agent and the CLI, and manage them in your own Studio.
 
 ## Automaton fits you if
 
