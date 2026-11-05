@@ -58,21 +58,27 @@ and `ab-shot.sh` log in and take screenshots), following the studio-design visua
 action (a button, a form), do it by clicking in Studio with `agent-browser`, not through the API. Record what passed
 and what you could not check.
 
-Proof on the PR: attach one HTML artifact named `proof` to the PR (GitHub issue artifacts; a PR is an issue):
+Proof on the issue: GitHub shows artifacts on issues, not on pull requests. Write the proof as one HTML page and
+publish it on the **issue** the PR closes with the helper, then comment its link on the PR:
 
 ```bash
-gh api -X POST repos/rzvdaniel/automaton/issues/<N>/artifacts -f name=proof -f type=embedded_html -F body=@proof.html
+python3 .agents/skills/automaton-implement-issue/proof.py <issue> proof.html
 ```
 
-It lists each done criterion from the issue, the evidence for it (the command and what came back, or a screenshot) and
-pass, fail or not checked with the reason. To update it, delete it and create it again; the artifact `number` is in
-the create response and in `gh api repos/rzvdaniel/automaton/issues/<N>/artifacts`, and `gh api -X DELETE
-repos/rzvdaniel/automaton/issues/<N>/artifacts/<number>` removes it. Add a `link` artifact to the issue that points to
-the PR. Artifact types are `generic` (Markdown), `link`, `plan` and `embedded_html`.
+The page lists each done criterion from the issue, the evidence for it (the command and what came back, or a link
+to a screenshot) and pass, fail or not checked with the reason. Keep it plain: one `<table>` (criterion, result,
+evidence), inline `<style>` only, no scripts, no embedded images. Running `proof.py` again replaces the issue's `proof`.
 
-Screenshots: GitHub has no image upload API, so push them to the orphan branch `pr-screenshots` under `pr-<N>/`
-(create the branch with `git switch --orphan pr-screenshots` if it does not exist; never merge it) and embed them in
-the PR comment as `![name](https://raw.githubusercontent.com/rzvdaniel/automaton/pr-screenshots/pr-<N>/name.png)`.
+Then label the issue: `verified` when every criterion passes (or is "not checked" with a reason the owner accepted),
+`verification-failed` when a check fails. Swap the label when the fix-forward release passes its re-check.
+
+Screenshots: push them to the orphan branch `pr-screenshots` under `pr-<N>/` (create it with
+`git switch --orphan pr-screenshots` if it does not exist; never merge or delete it). Link them, do not embed them:
+`https://raw.githubusercontent.com/rzvdaniel/automaton/pr-screenshots/pr-<N>/name.png`. The same links work in the
+proof, PR comments and issue comments (in Markdown, `![name](link)` also shows the image there). The artifact preview
+does not load images from other sites, so in the proof they are plain links (it also blocks a plain click: right-click,
+Open in new tab; `proof.py` adds that hint). Also list the screenshot links in the close-out comment on the issue,
+where a normal click opens them.
 The repository is public: use only `e2e-` test data and no passwords, tokens or keys in the shot.
 
 After every test-server upgrade, also run the Studio smoke checks (`src/automaton-studio-vue/smoke/README.md`:
