@@ -199,6 +199,30 @@ for service in $old_release_services; do
     container=$("${old_compose[@]}" ps -q "$service")
     [[ -n "$container" && "$(docker inspect -f '{{.State.Running}}' "$container")" == true ]] || { echo "$service is not running; repair the installation before updating." >&2; exit 1; }
 done
+# Each Runner image update leaves the previous digest behind as an untagged image that
+# `docker image prune` keeps. Before the free-space check, remove untagged Runner images that no
+# container uses. The newest one is kept for rollback, as are the images the installed and new
+# releases pin; docker refuses to remove an image a container (even a stopped one) still uses.
+runner_ref=$(grep -m1 '^RUNNER_IMAGE=' "$install_dir/release.env" 2>/dev/null | cut -d= -f2- || true)
+if [[ -n "$runner_ref" ]]; then
+    runner_repository=${runner_ref%%@*}
+    runner_repository=${runner_repository%:*}
+    protected_ids=" "
+    for pinned in "$runner_ref" "$(grep -m1 '^RUNNER_IMAGE=' "$bundle/release.env" 2>/dev/null | cut -d= -f2- || true)"; do
+        [[ -z "$pinned" ]] || protected_ids+="$(docker image inspect -f '{{.Id}}' "$pinned" 2>/dev/null || true) "
+    done
+    # Sort candidates by creation time (newest first) instead of trusting the listing order.
+    candidates=$(docker image ls --no-trunc --format '{{.ID}} {{.Repository}} {{.Tag}}' 2>/dev/null         | while read -r image_id image_repository image_tag; do
+            [[ "$image_repository" == "$runner_repository" && "$image_tag" == '<none>' ]] || continue
+            docker image inspect -f '{{.Created}} {{.Id}}' "$image_id" 2>/dev/null || true
+        done | sort -r || true)
+    kept_newest_untagged=0
+    while read -r _created full_id; do
+        [[ -n "$full_id" && "$protected_ids" != *" $full_id "* ]] || continue
+        if (( kept_newest_untagged == 0 )); then kept_newest_untagged=1; continue; fi
+        docker image rm "$full_id" >/dev/null 2>&1 && echo "Removed unused Runner image: $full_id" || echo "Kept Runner image (in use or not removable): $full_id"
+    done <<< "$candidates"
+fi
 disk_path=$backup_root
 while [[ ! -d "$disk_path" ]]; do disk_path=$(dirname -- "$disk_path"); done
 available_kb=$(df -Pk "$disk_path" | awk 'NR==2 {print $4}')
