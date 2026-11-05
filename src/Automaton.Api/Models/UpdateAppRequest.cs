@@ -9,9 +9,7 @@ public sealed class UpdateAppRequest
 {
     [Required]
     public string Name { get; set; } = string.Empty;
-    [Required]
     public string Summary { get; set; } = string.Empty;
-    [Required]
     public string Description { get; set; } = string.Empty;
     [JsonRequired]
     public bool IsPublished { get; set; }
@@ -36,8 +34,8 @@ public sealed class UpdateAppRequest
     public AppModel ToAppModel() => new()
     {
         Name = Name,
-        Summary = Summary,
-        Description = Description,
+        Summary = Summary ?? string.Empty,
+        Description = Description ?? string.Empty,
         IsPublished = IsPublished,
         IsForkable = IsForkable,
         PublicUrl = PublicUrl,
