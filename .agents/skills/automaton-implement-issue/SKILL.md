@@ -30,7 +30,7 @@ as you go; the task is not done until step 8 is.
 
 1. **Issue.** Find the issue. If there is none, create it first ([write-issue skill](../automaton-write-issue/SKILL.md)). If no task was given at all, take the
    open Todo item with the highest priority on the board and say which one you took. Read its parent and blockers, restate
-   the done criteria, and claim it (see Claiming below).
+   the done criteria, and set the board Status to In Progress.
 2. **Build.** Branch from `main`. For a bug, reproduce it first on the surface where it shows (API, CLI or Studio),
    then commit a failing test before the fix; afterwards the original reproduction must pass.
    Follow `AGENTS.md` (keep it simple, maintainability guardrails) and the area skills. Add tests for new behaviour, including who gets 200, 403 and 404.
@@ -59,20 +59,6 @@ as you go; the task is not done until step 8 is.
    open issues for gaps you found (write-issue skill), and tell the owner what is left for them, with links. If testing showed the docs are wrong,
    or the issue completes a roadmap step, fix the docs or the status in `docs/roadmap/README.md` in a small follow-up
    PR.
-
-## Claiming
-
-Several agents work in this repo, all under the owner's GitHub login, so the claim must be visible on the issue.
-
-- **Look first.** Skip the issue if it has the label `agent:in-progress`, a `by:*` label, an open pull request that
-  mentions it (`gh pr list --search "#N"`), or a branch named for it. Ask the orchestrator instead of taking it.
-- **Claim.** Add the labels `agent:in-progress` and your own `by:` label (`by:claude-server`, `by:claude-desktop`,
-  `by:codex` or `by:owner`), set the board Status to In Progress (on the board that holds the issue), and comment
-  "Started (<who>)". Then wait a few seconds and read the labels and comments again: if another agent also claimed it,
-  the claim comment with the lower id keeps the issue and the other agent releases and walks away.
-- **Release.** When the issue is done or you stop, remove `agent:in-progress` and your `by:` label, and comment why you
-  stopped if it is not finished. Done issues are closed by the production update (step 8), not by you.
-- Agents take issues named in their task. Picking from the board on your own is only for when no task names an issue.
 
 ## Gates
 
