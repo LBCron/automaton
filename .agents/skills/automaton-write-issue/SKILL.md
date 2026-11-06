@@ -58,7 +58,9 @@ Keep it short. Link related issues and PRs by number. No credentials, hostnames 
 
 ## Board
 
-Add the issue to the board and set the fields:
+Issues about the app catalog and its ecosystem (parent #729) live on their own board, https://github.com/users/rzvdaniel/projects/2 (Status and Priority only, no Plan): use `gh project item-add 2` and make the issue a sub-issue of #729. Everything else goes on the roadmap board below.
+
+Add the issue to the roadmap board and set the fields:
 
 ```sh
 gh project item-add 1 --owner rzvdaniel --url <issue-url>
