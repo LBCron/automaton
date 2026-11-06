@@ -45,12 +45,8 @@ as you go; the task is not done until step 8 is.
    - changes that let more people do something (widening access), or change how people sign in;
    - anything that touches production;
    - anything the owner said to hold.
-7. **Deliver and verify.** Release, upgrade the test server and verify as real users (`verify.md`). Batch: a release
-   plus a verification pass costs about an hour whatever the size of the change, so when you have several issues, merge
-   each reviewed PR as it is ready and release once for the whole group, then verify all of them in one pass. Only
-   risky changes (Runner, migrations, install or update scripts) go alone. Do not make a server release for changes
-   that are only docs, the website or the automaton-apps repo: merge them; the website is deployed separately (the
-   orchestrator does it). While CI and the review of one PR run, start the next issue instead of waiting.
+7. **Deliver and verify.** Release, upgrade the test server and verify as real users (`verify.md`). Several small,
+   independent changes may share one release; risky ones (Runner, migrations, install or update scripts) go alone.
    Real-server testing happens here, after merge. If a check fails, fix forward: a small follow-up PR (same review and
    CI), a new release and a re-check. Revert instead only when the fix is not quick or the failure blocks other work on
    the test server. Production is updated only after the proof passes, and only when the owner asks.
@@ -89,11 +85,6 @@ app (#693) automates this list once it exists.
 - `verified-partial`: only unit tests or part of the checks ran; the proof says what is missing and why.
 - `verification-failed`: a check failed; fix forward.
 - `live`: set by whoever updates production, just before closing.
-
-## Timing
-
-Note the time each stage took (code and tests, CI, review, release, verification) in your handoff, one line each, so
-the delivery loop can be tuned from real numbers. A stage you waited on without doing anything else is worth a remark.
 
 ## Handoff
 
