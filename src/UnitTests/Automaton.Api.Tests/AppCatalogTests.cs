@@ -8,6 +8,7 @@ using Automaton.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Automaton.Api.Tests;
 
@@ -542,12 +543,74 @@ public sealed class AppCatalogTests
         public Task WriteAsync(string action, string entityType, Guid? entityId, string message, object? metadata = null, string outcome = "Success", bool failOnError = false, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
+    [TestCase(null, true)]
+    [TestCase("Developer", true)]
+    [TestCase("FullAccess", true)]
+    [TestCase("ReadOnly", false)]
+    [TestCase("WorkflowExecution", false)]
+    [TestCase("Runner", false)]
+    [TestCase("WebApp", false)]
+    public void AnAdministratorsKey_CanManageSources_OnlyWithADeveloperOrFullAccessScope(string? scope, bool allowed)
+    {
+        var claims = scope is null ? [] : new[] { new System.Security.Claims.Claim("api_key_scope", scope) };
+        var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(claims, "test"));
+        Assert.That(Automaton.Api.Authentication.CatalogSourcesAccess.IsAllowed(user), Is.EqualTo(allowed));
+    }
+
+    [Test]
+    public async Task ADryRun_ChecksTheSourceAndReportsItWithoutSavingAnything()
+    {
+        var (service, store, db) = await WithSourcesAsync(new FakeHandler(_ => Respond(CatalogJson, null)));
+        await using var _ = db;
+        var controller = new Automaton.Api.Controllers.Admin.AdminCatalogSourcesController(store, service, new SilentAudit());
+
+        var result = await controller.Add(new CatalogSourceRequest { Repo = "acme/apps", Token = "github_pat_x" }, default, dryRun: true);
+
+        var preview = (result.Result as Microsoft.AspNetCore.Mvc.OkObjectResult)?.Value as CatalogSourceDto;
+        Assert.That(preview?.AppCount, Is.EqualTo(1));
+        Assert.That(preview?.HasToken, Is.True);
+        Assert.That(await store.ListAsync(default), Has.Count.EqualTo(1));
+        Assert.That(db.Settings.Any(setting => setting.Key.StartsWith("Apps.Catalog.Cache")), Is.False, "a dry run stores no catalog copy");
+    }
+
+    [TestCase(null, true)]
+    [TestCase("Developer", true)]
+    [TestCase("FullAccess", true)]
+    [TestCase("ReadOnly", false)]
+    [TestCase("Runner", false)]
+    public async Task TheRegisteredPolicy_AcceptsAnAdministratorsDeveloperKey_AndRefusesOtherScopes(string? scope, bool allowed)
+    {
+        var services = new ServiceCollection().AddLogging();
+        Automaton.Api.Extensions.ApiAuthorizationRegistration.AddApiAuthorization(services);
+        await using var provider = services.BuildServiceProvider();
+        var claims = scope is null ? [] : new[] { new System.Security.Claims.Claim("api_key_scope", scope) };
+        var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(claims, "test"));
+
+        var result = await provider.GetRequiredService<Microsoft.AspNetCore.Authorization.IAuthorizationService>()
+            .AuthorizeAsync(user, null, Automaton.Api.Authentication.CatalogSourcesAccess.PolicyName);
+
+        Assert.That(result.Succeeded, Is.EqualTo(allowed));
+    }
+
+    [Test]
+    public async Task ADryRun_StillRefusesASourceThatCannotBeRead()
+    {
+        var (service, store, db) = await WithSourcesAsync(new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)));
+        await using var _ = db;
+        var controller = new Automaton.Api.Controllers.Admin.AdminCatalogSourcesController(store, service, new SilentAudit());
+
+        var result = await controller.Add(new CatalogSourceRequest { Repo = "acme/missing" }, default, dryRun: true);
+
+        Assert.That(result.Result, Is.TypeOf<Microsoft.AspNetCore.Mvc.BadRequestObjectResult>());
+    }
+
     [Test]
     public void ManagingSources_NeedsASystemAdministrator()
     {
         var controller = typeof(Automaton.Api.Controllers.Admin.AdminCatalogSourcesController);
         var authorize = controller.GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute), true).Cast<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>().Single();
         Assert.That(authorize.Roles, Is.EqualTo(Automaton.Api.Enums.UserRole.SystemAdministrator));
+        Assert.That(authorize.Policy, Is.EqualTo(Automaton.Api.Authentication.CatalogSourcesAccess.PolicyName));
         Assert.That(controller.GetMethods().Where(m => m.GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute), true).Any()), Is.Empty);
     }
 
