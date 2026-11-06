@@ -18,6 +18,25 @@ public sealed class AppListItemDto
     public AppListRunnerDto? Runner { get; init; }
     public AppListEnvironmentDto? LiveEnvironment { get; init; }
     public AppListRuntimeDto Runtime { get; init; } = new();
+    /// <summary>The app has no web runtime or static site, only Actions.</summary>
+    public bool ActionsOnly { get; init; }
+    public AppListActionRunDto? LastActionRun { get; init; }
+
+    public AppListItemDto WithLastActionRun(AppListActionRunDto? run)
+        => new()
+        {
+            Id = Id, Name = Name, Summary = Summary, Description = Description, ThumbnailUrl = ThumbnailUrl, Tags = Tags,
+            IsPublished = IsPublished, CanLaunchPublicly = CanLaunchPublicly, PublicUrl = PublicUrl, UpdatedAtUtc = UpdatedAtUtc,
+            CanDelete = CanDelete, Runner = Runner, LiveEnvironment = LiveEnvironment, Runtime = Runtime,
+            ActionsOnly = ActionsOnly, LastActionRun = run,
+        };
+}
+
+public sealed class AppListActionRunDto
+{
+    public string ModuleKey { get; init; } = string.Empty;
+    public string Status { get; init; } = string.Empty;
+    public DateTime CreatedAtUtc { get; init; }
 }
 
 public sealed class AppListEnvironmentDto
