@@ -12,7 +12,7 @@ Only when the owner names this skill or says you orchestrate.
 the release and production steps and the owner's standing decisions. If the file does not exist, copy
 `config.example.md` (next to this file) to `.agents/orchestrator.config.md`, interview the owner to fill in every section
 (one question at a time, propose defaults), and commit it before delegating anything. Never put secrets in it: name where
-they live, not their values.
+they live, not their values. The configuration is specific to one installation and is **not committed** (it is listed in `.gitignore`): keep a copy somewhere private, for example a private repository.
 
 Then read `AGENTS.md`, the delivery skills it lists (`automaton-implement-issue`, `automaton-write-issue`,
 `automaton-write-pr`, `production-deployment`) and the open issue labelled `handover`, if there is one.

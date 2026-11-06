@@ -122,3 +122,6 @@ AgentRuns/
 
 # Host-local Machine Management Runner credentials and configuration
 /self-hosted-runners/
+
+# Each installation keeps its own orchestrator configuration (servers, boards, decisions); see .agents/skills/automaton-orchestrate/config.example.md
+.agents/orchestrator.config.md
