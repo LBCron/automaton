@@ -42,14 +42,27 @@ public class PublicMarketplaceController : ControllerBase
     public async Task<ActionResult<List<MarketplaceAppCardDto>>> GetApps(
         [FromQuery] string? category = null,
         [FromQuery] string? search = null,
-        [FromQuery] int take = 20)
+        [FromQuery] int take = 20,
+        [FromQuery] bool installableOnly = false)
     {
-        var apps = await _catalogQuery.GetAppsAsync(
-            category, search, take, TryGetCurrentUserId(), HttpContext.RequestAborted);
+        var wanted = Math.Clamp(take, 1, 100);
+        var currentUserId = TryGetCurrentUserId();
+        var result = new List<MarketplaceAppCardDto>();
 
-        await PopulateApplicationSourceFlagsAsync(apps);
+        // The web-page rule is read from each app's contract, so page through the catalog until enough apps pass it.
+        // The public store lists apps a visitor can open; tools without a web page are for Studio's Install apps page.
+        // At most five batches (500 apps) are scanned per request.
+        const int batchSize = 100;
+        for (var skip = 0; result.Count < wanted && skip < 5 * batchSize; skip += batchSize)
+        {
+            var batch = await _catalogQuery.GetAppsAsync(
+                category, search, batchSize, currentUserId, HttpContext.RequestAborted, skip);
+            await PopulateApplicationSourceFlagsAsync(batch);
+            result.AddRange(batch.Where(app => installableOnly ? !app.HasWebPage && app.IsForkable : app.HasWebPage));
+            if (batch.Count < batchSize) break;
+        }
 
-        return Ok(apps);
+        return Ok(result.Take(wanted).ToList());
     }
 
     [HttpGet("apps/{appId:guid}")]
@@ -93,10 +106,12 @@ public class PublicMarketplaceController : ControllerBase
         app.RelatedApps = await LoadRelatedAppsAsync(app, currentUserId);
 
         await PopulateApplicationSourceFlagsAsync(app.RelatedApps);
+        app.RelatedApps = app.RelatedApps.Where(related => related.HasWebPage).ToList();
 
         app.ForksAndRemixes = await LoadForksAndRemixesAsync(app, currentUserId);
 
         await PopulateApplicationSourceFlagsAsync(app.ForksAndRemixes);
+        app.ForksAndRemixes = app.ForksAndRemixes.Where(fork => fork.HasWebPage).ToList();
 
         return Ok(app);
     }
@@ -300,12 +315,12 @@ public class PublicMarketplaceController : ControllerBase
         }
 
         var apps = await _creatorAppsQuery
-            .FindCreatorApps(appId, creatorUserId, currentUserId, take)
+            .FindCreatorApps(appId, creatorUserId, currentUserId, 100)
             .ToListAsync();
 
         await PopulateApplicationSourceFlagsAsync(apps);
 
-        return Ok(apps);
+        return Ok(apps.Where(app => app.HasWebPage).Take(Math.Clamp(take, 1, 100)).ToList());
     }
 
     [HttpGet("categories")]
