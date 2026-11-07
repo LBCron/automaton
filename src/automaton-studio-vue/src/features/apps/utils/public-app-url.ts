@@ -45,6 +45,13 @@ export function getDeployedAppUrl(appId?: string | null): string {
   return baseUrl.toString()
 }
 
+/** The private address of an app plus the page the visitor asked for; anything that leaves that address becomes its home page. */
+export function getLaunchTargetUrl(appId: string, path: string): string {
+  const base = new URL(getDeployedAppUrl(appId))
+  const target = new URL(path, base)
+  return target.origin === base.origin ? target.toString() : base.toString()
+}
+
 export function getDeploymentTargetUrl(appId?: string | null, routePath?: string | null): string {
   const deployedAppUrl = getDeployedAppUrl(appId)
   const normalizedRoutePath = routePath?.trim()
