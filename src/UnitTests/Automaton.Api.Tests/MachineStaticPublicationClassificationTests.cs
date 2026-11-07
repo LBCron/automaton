@@ -29,7 +29,7 @@ public sealed class MachineStaticPublicationClassificationTests
         await using var fixture = await PublicationFixture.CreateAsync(contract);
 
         var published = await fixture.Service.PublishIfAssignedAsync(
-            fixture.App, AppRuntimeVisibilities.Public, Guid.NewGuid(), CancellationToken.None);
+            fixture.App, Guid.NewGuid(), CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -52,7 +52,7 @@ public sealed class MachineStaticPublicationClassificationTests
         await using var fixture = await PublicationFixture.CreateAsync(contract);
 
         var published = await fixture.Service.PublishIfAssignedAsync(
-            fixture.App, AppRuntimeVisibilities.Public, Guid.NewGuid(), CancellationToken.None);
+            fixture.App, Guid.NewGuid(), CancellationToken.None);
 
         Assert.Multiple(() =>
         {

@@ -59,8 +59,9 @@ public sealed class AppPublicationService(
         if (executionRunnerId.HasValue)
             await runnerAssignmentPolicy.AssignAsync(entity, executionRunnerId, UserId, cancellationToken);
 
-        var isMachineStaticPublication = machineStaticPublication is not null
-            && await machineStaticPublication.PublishIfAssignedAsync(entity, runtimeVisibility, UserId, cancellationToken);
+        var isMachineStaticPublication = runtimeVisibility == AppRuntimeVisibilities.Public
+            && machineStaticPublication is not null
+            && await machineStaticPublication.PublishIfAssignedAsync(entity, UserId, cancellationToken);
         await EnsureAuthenticatedPublicationSupportedAsync(
             id, runtimeVisibility, requiresAuthentication, isMachineStaticPublication, cancellationToken);
 
@@ -101,8 +102,8 @@ public sealed class AppPublicationService(
         // Keep PublicUrl for re-publishing with the same slug.
         await dataContext.SaveChangesAsync(cancellationToken);
         await RecordUnpublishedAppAsync(entity, id, cancellationToken);
-        if (machineStaticPublication is not null)
-            await machineStaticPublication.QueueRemovalIfAssignedAsync(id, UserId, cancellationToken);
+        // The private address continues to serve the deployed static output after unpublishing.
+        // The public host is revoked by the publication state above.
     }
 
     private async Task EnsureAuthenticatedPublicationSupportedAsync(
