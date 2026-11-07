@@ -93,3 +93,8 @@ anything waiting for the owner. For each end-to-end check, give what was run and
 command output or screenshot path). Mark anything you did not check as "not checked", with the reason.
 Do not keep an issue open for checks you can run yourself on the test server (browser, Studio buttons, screenshots).
 Only something that truly needs the owner stays, as its own issue linked from the handoff.
+
+Proof cost: viewing an image costs about 1,500 tokens and stays in your context. So:
+- Use text proofs (status code, response body, page text) for functional checks. Use screenshots only for visual changes (website, Studio, app design).
+- Capture the viewport, not the full page, unless the whole page's layout is the point.
+- Look at each screenshot once to confirm it shows the right thing, then post it. Reviewers and the orchestrator do not reopen it unless something looks wrong.
