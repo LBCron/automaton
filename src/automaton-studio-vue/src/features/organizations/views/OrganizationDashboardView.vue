@@ -104,10 +104,6 @@ function navigateToMembers() {
   router.push({ name: 'organization-members', params: { id: organizationId.value } })
 }
 
-function navigateToProjects() {
-  router.push({ name: 'organization-projects', params: { id: organizationId.value } })
-}
-
 function navigateToApps() {
   router.push({ name: 'organization-apps', params: { id: organizationId.value } })
 }
@@ -222,34 +218,12 @@ const formatDate = (date: string) => {
           </template>
         </Card>
 
-        <!-- Projects Card - Hidden for AppUser -->
-        <Card v-if="!isAppUser">
-          <template #title>
-            <div class="flex align-items-center gap-2">
-              <i class="pi pi-folder" style="color: var(--p-primary-color)"></i>
-              <span>Projects</span>
-            </div>
-          </template>
-          <template #content>
-            <div class="stat-value">{{ organization.projectCount }}</div>
-            <p class="text-muted">Organization projects</p>
-          </template>
-          <template #footer>
-            <Button
-              label="View Projects"
-              icon="pi pi-arrow-right"
-              text
-              @click="navigateToProjects"
-            />
-          </template>
-        </Card>
-
         <!-- Apps Card - Label changes based on role -->
         <Card>
           <template #title>
             <div class="flex align-items-center gap-2">
               <i class="pi pi-th-large" style="color: var(--p-primary-color)"></i>
-              <span>{{ isAppUser ? 'My Apps' : 'Apps' }}</span>
+              <span>{{ isAppUser ? 'Assigned apps' : 'Apps' }}</span>
             </div>
           </template>
           <template #content>
@@ -258,10 +232,10 @@ const formatDate = (date: string) => {
           </template>
           <template #footer>
             <Button
-              :label="isAppUser ? 'View My Apps' : 'Manage Apps'"
+              :label="isAppUser ? 'View Apps' : 'Manage Apps'"
               icon="pi pi-arrow-right"
               text
-              @click="isAppUser ? router.push({ name: 'assigned-apps' }) : navigateToApps()"
+              @click="isAppUser ? router.push({ name: 'apps' }) : navigateToApps()"
             />
           </template>
         </Card>
