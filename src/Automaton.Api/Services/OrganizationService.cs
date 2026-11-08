@@ -963,10 +963,18 @@ public class OrganizationService : IOrganizationService
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var apps = await GetAssignedAppsQuery(userId, null)
+        var assigned = await GetAssignedAppsQuery(userId, null)
             .Select(assignment => assignment.App!)
             .ToListAsync(cancellationToken);
-        return apps
+        // Apps in a project (team) the user is an active member of: the user can already open them, so list them too.
+        var viaTeam = await dbContext.ProjectApps
+            .Where(projectApp => projectApp.Project!.IsActive &&
+                projectApp.Project.Members.Any(member => member.UserId == userId && member.IsActive))
+            .Select(projectApp => projectApp.WebApp!)
+            .Where(app => app.DeletionClaimId == null)
+            .ToListAsync(cancellationToken);
+        return assigned
+            .Concat(viaTeam)
             .DistinctBy(app => app.Id)
             .ToArray();
     }
