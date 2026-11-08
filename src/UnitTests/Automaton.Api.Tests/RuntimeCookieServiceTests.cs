@@ -115,8 +115,8 @@ public class RuntimeCookieServiceTests
     public void BuildRuntimeCookieOptions_WhenSiblingParentLooksLikePublicSuffix_DoesNotSetCookieDomain()
     {
         var service = CreateService(
-            apiBaseUrl: "https://api.example.co.uk",
-            publicBaseUrl: "https://apps.example.co.uk");
+            apiBaseUrl: "https://api.co.uk",
+            publicBaseUrl: "https://apps.co.uk");
         var appId = Guid.NewGuid();
         var context = new DefaultHttpContext();
         context.Request.Scheme = "https";
@@ -124,6 +124,34 @@ public class RuntimeCookieServiceTests
         var options = service.BuildRuntimeCookieOptions(appId, context.Request, DateTimeOffset.UtcNow.AddMinutes(5));
 
         Assert.That(options.Domain, Is.Null);
+    }
+
+    [Test]
+    public void BuildRuntimeCookieOptions_WhenInstallLivesUnderASubdomain_ScopesCookieToThatSubdomain()
+    {
+        var service = CreateService(
+            apiBaseUrl: "https://api.runner-01.automaton.monster",
+            publicBaseUrl: "https://apps.runner-01.automaton.monster");
+        var context = new DefaultHttpContext();
+        context.Request.Scheme = "https";
+
+        var options = service.BuildRuntimeCookieOptions(Guid.NewGuid(), context.Request, DateTimeOffset.UtcNow.AddMinutes(5));
+
+        Assert.That(options.Domain, Is.EqualTo(".runner-01.automaton.monster"));
+    }
+
+    [TestCase("api.example.co.uk", "apps.example.co.uk", ".example.co.uk")]
+    [TestCase("api.com.au", "apps.com.au", null)]
+    public void BuildRuntimeCookieOptions_WithCountryCodeSecondLevelDomains_OnlyScopesToRegistrableParent(
+        string apiHost, string appsHost, string? expectedDomain)
+    {
+        var service = CreateService($"https://{apiHost}", $"https://{appsHost}");
+        var context = new DefaultHttpContext();
+        context.Request.Scheme = "https";
+
+        var options = service.BuildRuntimeCookieOptions(Guid.NewGuid(), context.Request, DateTimeOffset.UtcNow.AddMinutes(5));
+
+        Assert.That(options.Domain, Is.EqualTo(expectedDomain));
     }
 
     [Test]
